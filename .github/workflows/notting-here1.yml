@@ -1,0 +1,31 @@
+name: 9Hits Unlimited Points
+
+on:
+  workflow_dispatch: # Allows manual start
+  schedule:
+    - cron: '0 */6 * * *' # Auto-restarts every 6 hours (DO NOT REMOVE)
+
+jobs:
+  earn-points:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # This starts 3 separate computers earning points simultaneously
+        session_id: [1]
+    
+    steps:
+      - name: Launch 9Hits Node #${{ matrix.session_id }}
+        env:
+          TOKEN: ${{ secrets.NINEHITS_TOKEN }}
+        run: |
+          echo "Starting Node #${{ matrix.session_id }}..."
+          
+          # Prevents all 3 nodes from hitting the login server at the exact same millisecond
+          sleep $(( ${{ matrix.session_id }} * 20 ))
+          
+          # We use the official Docker image (no downloading needed)
+          # --shm-size=2gb prevents the browser from crashing
+          docker run --rm \
+            --shm-size=2gb \
+            9hitste/appv5:latest \
+            ./nh.sh --token=$TOKEN --system-session --allow-crypto=no --hide-browser --cache-del=100
